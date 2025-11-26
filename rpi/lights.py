@@ -83,3 +83,32 @@ class Lights:
             self.pixels[i] = new_color
         self.pixels.show()
         self.expected_rotation_delta = lerp(self.expected_rotation_delta, 0, delta * LIGHT_SLOWDOWN_SPEED)
+
+local_lights = Lights(local_pixels)
+networked_lights = Lights(networked_pixels)
+
+last_time = time.time()
+while True:
+    current_time = time.time()
+    delta = current_time - last_time
+    last_time = current_time
+
+    try:
+        data, addr = sock.recvfrom(1024)
+        message = json.loads(data.decode('utf-8'))
+        value = message.get("value", 0)
+        delta_value = message.get("delta", 0)
+
+        if value:
+            networked_lights.color = sample_color_gradient(value)
+        if delta_value:
+            networked_lights.expected_rotation_delta = delta_value
+    except BlockingIOError:
+        pass
+
+    # todo: get input from local sensors
+
+    local_lights.process(delta)
+    networked_lights.process(delta)
+
+    time.sleep(0.03)
