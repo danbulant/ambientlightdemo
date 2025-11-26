@@ -1,0 +1,65 @@
+[gd_scene load_steps=10 format=3 uid="uid://bfysabo18nycq"]
+
+[ext_resource type="Script" uid="uid://yxfetvyqh2t3" path="res://main.gd" id="1_h2yge"]
+[ext_resource type="Script" uid="uid://cjmoj5kmiquip" path="res://lights.gd" id="1_ig7tw"]
+[ext_resource type="PackedScene" uid="uid://b6opad48icrl8" path="res://light.tscn" id="2_0xm2m"]
+
+[sub_resource type="Gradient" id="Gradient_h2yge"]
+offsets = PackedFloat32Array(0, 0.25, 0.5, 0.75, 1)
+colors = PackedColorArray(0.8156863, 0.38431373, 1, 1, 5.1018596e-06, 0.6902809, 0.5935051, 1, 0.31225172, 0.8011136, 0, 1, 0.5515474, 0.79056466, 1, 1, 0.8171765, 0.38458148, 1, 1)
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_0xm2m"]
+top_radius = 1.0
+bottom_radius = 1.0
+height = 0.01
+cap_bottom = false
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_7dm0k"]
+
+[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_7dm0k"]
+
+[sub_resource type="Sky" id="Sky_ig7tw"]
+sky_material = SubResource("ProceduralSkyMaterial_7dm0k")
+
+[sub_resource type="Environment" id="Environment_0xm2m"]
+background_mode = 2
+sky = SubResource("Sky_ig7tw")
+
+[node name="Node3D" type="Node3D"]
+script = ExtResource("1_h2yge")
+color_gradient = SubResource("Gradient_h2yge")
+
+[node name="Plane" type="MeshInstance3D" parent="."]
+unique_name_in_owner = true
+mesh = SubResource("CylinderMesh_0xm2m")
+surface_material_override/0 = SubResource("StandardMaterial3D_7dm0k")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_0xm2m")
+
+[node name="Camera3D" type="Camera3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, -4.371139e-08, 1, 0, -1, -4.371139e-08, 0, 2, 0)
+
+[node name="Lights" type="Marker3D" parent="."]
+unique_name_in_owner = true
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
+gizmo_extents = 0.7
+script = ExtResource("1_ig7tw")
+light_count = 20
+light_radius = 0.7
+light_template = ExtResource("2_0xm2m")
+
+[node name="HSlider" type="HSlider" parent="."]
+unique_name_in_owner = true
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -150.0
+offset_top = -16.0
+offset_right = 150.0
+grow_horizontal = 2
+grow_vertical = 0
+max_value = 1.0
+step = 0.0
