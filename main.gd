@@ -18,8 +18,13 @@ func _ready():
 	peer.bind(4433)
 	peer.set_dest_address("rpi1", 4444)
 	
+var last_send_time := 0.0
 
 func send_data(data: Dictionary) -> void:
+	var current_time := Time.get_ticks_msec() / 1000.0
+	if current_time - last_send_time < 0.05:
+		return
+	last_send_time = current_time
 	var json_data := JSON.stringify(data)
 	var byte_array := json_data.to_utf8_buffer()
 	peer.put_packet(byte_array)
