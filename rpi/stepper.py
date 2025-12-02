@@ -48,3 +48,21 @@ class StepperMotor:
                 self.single_step_back()
     def pos(self):
         return self.current_step % self.step_count
+    def fpos(self):
+        return (self.current_step % self.step_count) / self.step_count
+    
+    def single_step_towards(self, target_pos):
+        current_pos = self.pos()
+        # Determine shortest direction
+        # includes wrap-around (it's a circular motion motor)
+        diff = (target_pos - current_pos + self.step_count) % self.step_count
+        if diff > self.step_count / 2:
+            self.single_step_back()
+        else:
+            self.single_step()
+    def angle_to_pos(self, angle):
+        return int((angle % 360) / 360 * self.step_count)
+    def fpos_to_pos(self, fpos):
+        return int((fpos % 1) * self.step_count)
+    
+stepper = StepperMotor()

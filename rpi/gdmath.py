@@ -31,3 +31,12 @@ def sample_color_gradient(t):
             color_b = colors_rgb[i + 1]
             return tuple(int(lerp(color_a[j], color_b[j], local_t)) for j in range(3))
     return colors_rgb[-1]
+def shortest_diff(old, new):
+    diff = old - new
+    wrapped_diff = (new + 1) - old
+    if abs(wrapped_diff) < abs(diff):
+        diff = -wrapped_diff
+    wrapped_diff = (old + 1) - new
+    if abs(wrapped_diff) < abs(diff):
+        diff = wrapped_diff
+    return diff

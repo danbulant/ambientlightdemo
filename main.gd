@@ -2,10 +2,13 @@ extends Node3D
 
 @onready var lights: Lights = %Lights
 @onready var slider: HSlider = %HSlider
-@onready var networked_lights: Lights = %NetworkedLights
 
 @export var light_rotation: float = 0.0
+@export var light_delta: float = 0.0
 @export var color_gradient: Gradient
+
+var remote_light_rotation: float = 0.0
+var remote_light_delta: float = 0.0
 
 var peer: PacketPeerUDP
 
@@ -13,7 +16,7 @@ func _ready():
 	slider.value_changed.connect(set_local_light_rotation)
 	peer = PacketPeerUDP.new()
 	peer.bind(4433)
-	peer.set_dest_address("rpi", 4444)
+	peer.set_dest_address("rpi1", 4444)
 	
 
 func send_data(data: Dictionary) -> void:
@@ -46,11 +49,21 @@ func set_local_light_rotation(value: float) -> void:
 		send_data({"value": value})
 		return
 
+	error_correction = 0.
+
 	lights.expected_rotation_delta = diff
+	light_delta = diff
 	light_rotation = value
 	send_data({"value": value, "delta": diff})
 
 func _process(_delta):
+	var joystick_x = Input.get_joy_axis(0, JOY_AXIS_LEFT_X)
+	var joystick_y = Input.get_joy_axis(0, JOY_AXIS_LEFT_Y)
+	var joystick = Vector2(joystick_x, joystick_y)
+	if joystick.length() > 0.2:
+		var angle = (atan2(joystick_y, joystick_x) / TAU) + 0.25
+		angle = wrapf(angle, 0, 1)
+		set_local_light_rotation(angle)
 	if peer.get_available_packet_count() > 0:
 		var array_bytes = peer.get_packet()
 		var packet_string = array_bytes.get_string_from_ascii()
@@ -58,8 +71,8 @@ func _process(_delta):
 		if json != null:
 			var value = json.value
 			var delta = json.delta
-			networked_lights.expected_rotation_delta = delta
+			# networked_lights.expected_rotation_delta = delta
 			
-			var polarized_value := pingpong(value * 4, 1)
-			networked_lights.light_intensity = 1.0 - polarized_value
-			networked_lights.light_color = color_gradient.sample(value)
+			# var polarized_value := pingpong(value * 4, 1)
+			# networked_lights.light_intensity = 1.0 - polarized_value
+			# networked_lights.light_color = color_gradient.sample(value)

@@ -23,3 +23,5 @@ class Lights:
             self.pixels[i] = new_color
         self.pixels.show()
         self.expected_rotation_delta = lerp(self.expected_rotation_delta, 0, delta * LIGHT_SLOWDOWN_SPEED)
+
+lights = Lights(pixels)
