@@ -31,13 +31,22 @@ local_delta = 0
 remote_rotation = 0
 remote_delta = 0
     
+def motor_rotation_fn():
+    global remote_rotation
+    while True:
+        target_pos = stepper.fpos_to_pos(1 - remote_rotation)
+        stepper.single_step_towards(target_pos) # blocking / time.sleep
+
 def read_thread_fn():
     global local_rotation, local_delta
     while True:
         old_rotation = local_rotation
         local_rotation = read_angle_f()
         local_delta = gdmath.shortest_diff(old_rotation, local_rotation)
-        send_json({"value": local_rotation, "delta": local_delta})
+        try:
+            send_json({"value": local_rotation, "delta": local_delta})
+        except Exception as e:
+            print("Error sending data:", e)
 
 def lights_fn():
     global local_rotation, local_delta, remote_rotation, remote_delta
@@ -57,10 +66,14 @@ def network_recv_fn():
     while True:
         data = receive_json()
         if data:
-            remote_rotation = data["value"]
-            remote_delta = data["delta"]
+            if "value" in data:
+                remote_rotation = data["value"]
+            if "delta" in data:
+                remote_delta = data["delta"]
         time.sleep(0.01)
 
+motor_thread = threading.Thread(target=motor_rotation_fn)
+motor_thread.start()
 read_thread = threading.Thread(target=read_thread_fn)
 read_thread.start()
 lights_thread = threading.Thread(target=lights_fn)
@@ -68,6 +81,7 @@ lights_thread.start()
 network_thread = threading.Thread(target=network_recv_fn)
 network_thread.start()
 
+motor_thread.join()
 read_thread.join()
 lights_thread.join()
 network_thread.join()

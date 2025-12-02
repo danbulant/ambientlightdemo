@@ -1,5 +1,6 @@
 import RPi.GPIO as GPIO
 import time
+import atexit
 
 class StepperMotor:
     pins = (17, 27, 22, 23)
@@ -10,7 +11,9 @@ class StepperMotor:
         GPIO.setmode( GPIO.BCM )
         for pin in self.pins:
             GPIO.setup( pin, GPIO.OUT )
+        for pin in self.pins:
             GPIO.output( pin, GPIO.LOW )
+        atexit.register(self.cleanup)
 
     def cleanup(self):
         for pin in self.pins:
@@ -25,18 +28,19 @@ class StepperMotor:
 
     current_step = 0
     def _apply_single_step(self):
-        if self.current_step%4==0:
-            self._set_pins(GPIO.HIGH, GPIO.LOW, GPIO.LOW, GPIO.LOW)
-        elif self.current_step%4==1:
-            self._set_pins(GPIO.LOW, GPIO.HIGH, GPIO.LOW, GPIO.LOW)
-        elif self.current_step%4==2:
-            self._set_pins(GPIO.LOW, GPIO.LOW, GPIO.HIGH, GPIO.LOW)
-        elif self.current_step%4==3:
+        current_step_abs = abs(self.current_step)
+        if current_step_abs%4==0:
             self._set_pins(GPIO.LOW, GPIO.LOW, GPIO.LOW, GPIO.HIGH)
+        elif current_step_abs%4==1:
+            self._set_pins(GPIO.LOW, GPIO.HIGH, GPIO.LOW, GPIO.LOW)
+        elif current_step_abs%4==2:
+            self._set_pins(GPIO.LOW, GPIO.LOW, GPIO.HIGH, GPIO.LOW)
+        elif current_step_abs%4==3:
+            self._set_pins(GPIO.HIGH, GPIO.LOW, GPIO.LOW, GPIO.LOW)
         time.sleep(self.step_sleep)
     def single_step(self):
-        self._apply_single_step()
         self.current_step += 1
+        self._apply_single_step()
     def single_step_back(self):
         self.current_step -= 1
         self._apply_single_step()
@@ -52,10 +56,13 @@ class StepperMotor:
         return (self.current_step % self.step_count) / self.step_count
     
     def single_step_towards(self, target_pos):
+        target_pos = target_pos % self.step_count
         current_pos = self.pos()
+        if target_pos == current_pos:
+            return
         # Determine shortest direction
         # includes wrap-around (it's a circular motion motor)
-        diff = (target_pos - current_pos + self.step_count) % self.step_count
+        diff = (target_pos - current_pos) % self.step_count
         if diff > self.step_count / 2:
             self.single_step_back()
         else:

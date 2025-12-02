@@ -36,7 +36,6 @@ def cleanup():
  
 # the meat
 try:
-    i = 0
     for i in range(step_count):
         if i%4==0:
             GPIO.output( out4, GPIO.HIGH )

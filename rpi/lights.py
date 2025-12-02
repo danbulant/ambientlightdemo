@@ -19,7 +19,7 @@ class Lights:
         for i in range(pixels.n):
             pattern_offset = wrap((i + (self.virtual_rotation * PATTERN_REPETITION)) / PATTERN_REPETITION, 0, 1)
             energy = (1 - (1 - pattern_offset) * max_darkness)
-            new_color = tuple(x * energy for x in self.color)
+            new_color = tuple(int(x * energy) for x in self.color)
             self.pixels[i] = new_color
         self.pixels.show()
         self.expected_rotation_delta = lerp(self.expected_rotation_delta, 0, delta * LIGHT_SLOWDOWN_SPEED)
