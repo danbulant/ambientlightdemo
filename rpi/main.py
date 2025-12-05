@@ -26,15 +26,15 @@ def receive_json():
     except BlockingIOError:
         return None
 
-local_rotation = 0
-local_delta = 0
-remote_rotation = 0
-remote_delta = 0
-    
+local_rotation: float = 0
+local_delta: float = 0
+remote_rotation: float = 0
+remote_delta: float = 0
+
 def motor_rotation_fn():
     global remote_rotation
     while True:
-        target_pos = stepper.fpos_to_pos(1 - remote_rotation)
+        target_pos = stepper.fpos_to_pos(remote_rotation)
         stepper.single_step_towards(target_pos) # blocking / time.sleep
 
 def read_thread_fn():
@@ -43,21 +43,23 @@ def read_thread_fn():
         old_rotation = local_rotation
         local_rotation = read_angle_f()
         local_delta = gdmath.shortest_diff(old_rotation, local_rotation)
+        lights.expected_rotation_delta_local = local_delta
+        lights.rotation_local = local_rotation
         try:
             send_json({"value": local_rotation, "delta": local_delta})
         except Exception as e:
             print("Error sending data:", e)
+        time.sleep(0.01)
 
 def lights_fn():
     global local_rotation, local_delta, remote_rotation, remote_delta
     last_time = time.time()
     delta = 1/60
     while True:
-        lights.color = gdmath.sample_color_gradient(local_rotation + remote_rotation)
-        lights.expected_rotation_delta = local_delta
+        lights.color = gdmath.sample_color_gradient((local_rotation + remote_rotation) / 2)
         lights.process(delta)
-        current_time = time.time()
         time.sleep(1/60)
+        current_time = time.time()
         delta = current_time - last_time
         last_time = current_time
 
@@ -68,8 +70,10 @@ def network_recv_fn():
         if data:
             if "value" in data:
                 remote_rotation = data["value"]
+                lights.rotation_remote = remote_rotation
             if "delta" in data:
                 remote_delta = data["delta"]
+                lights.expected_rotation_delta_remote = remote_delta
         time.sleep(0.01)
 
 motor_thread = threading.Thread(target=motor_rotation_fn)

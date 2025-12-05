@@ -1,10 +1,11 @@
 import RPi.GPIO as GPIO
 import time
 import atexit
+from gdmath import wrap
 
 class StepperMotor:
     pins = (17, 27, 22, 23)
-    step_sleep = 0.002
+    step_sleep = 0.01
     step_count = 200
 
     def __init__(self):
@@ -28,7 +29,7 @@ class StepperMotor:
 
     current_step = 0
     def _apply_single_step(self):
-        current_step_abs = abs(self.current_step)
+        current_step_abs = wrap(self.current_step, 0, 4)
         if current_step_abs%4==0:
             self._set_pins(GPIO.LOW, GPIO.LOW, GPIO.LOW, GPIO.HIGH)
         elif current_step_abs%4==1:
